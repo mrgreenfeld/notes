@@ -1,0 +1,55 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  passwordHash  String
+  name          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  notes         Note[]
+  tags          Tag[]
+  
+  @@map("users")
+}
+
+model Note {
+  id            Int       @id @default(autoincrement())
+  title         String
+  content       String?
+  isImportant   Boolean   @default(false)
+  isDeleted     Boolean   @default(false)
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tags          Tag[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+  
+  @@map("notes")
+  @@index([userId])
+  @@index([isDeleted])
+  @@index([isImportant])
+}
+
+model Tag {
+  id            Int       @id @default(autoincrement())
+  name          String
+  color         String?   @default("#3b82f6")
+  userId        Int
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes         Note[]
+  
+  // Явно задаем имя составного уникального ключа
+  @@unique(fields: [name, userId], name: "name_userId_unique")
+  @@map("tags")
+  @@index([userId])
+}

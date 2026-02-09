@@ -5,7 +5,6 @@ services:
     image: postgres:15-alpine
     restart: always
     environment:
-      # Настройки на основе твоей строки подключения
       POSTGRES_USER: notes_user
       POSTGRES_PASSWORD: notes_password
       POSTGRES_DB: notes_db
@@ -25,13 +24,23 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Заменяем localhost на db (имя сервиса выше)
       DATABASE_URL: "postgresql://notes_user:notes_password@db:5432/notes_db?schema=public"
     depends_on:
       db:
         condition: service_healthy
     command: >
-      sh -c "npx prisma migrate deploy && npm start"
+      sh -c "npx prisma db push && npm start"
+
+  studio:
+    build: .
+    ports:
+      - "5555:5555"
+    environment:
+      DATABASE_URL: "postgresql://notes_user:notes_password@db:5432/notes_db?schema=public"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: npx prisma studio --browser none --hostname 0.0.0.0
 
 volumes:
   pgdata:
